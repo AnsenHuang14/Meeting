@@ -1,0 +1,36 @@
+8 left 
+10 left right* done
+36 bottom* done
+43 left
+46 left
+50 left
+55 left
+56 right
+57 left
+63 top
+67 wrong preprocess* done
+73 left
+75 top
+80 right
+84 right
+88 top 
+108 top and words* done
+120 bottom right* done
+121 right
+125 bottom
+126 bottom* done 
+135 top words* right done
+137 bottom
+141 top words* done
+143 top words*
+152 bottom right
+161 top words* done
+163 right 
+164 right
+171 top words bottom* done
+180 top
+182 bottom* done
+216 top words* done
+227 bottom 
+236 left bottom* done
+
