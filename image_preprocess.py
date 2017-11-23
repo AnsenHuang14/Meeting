@@ -12,7 +12,7 @@ np.set_printoptions(threshold=np.inf)
 
 # get color and grayscale image matrix by coordinate in dicom
 # crop image by setting weight and height refer to roi four nodes
-def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=260,h=180,num=0):
+def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,num=0):
 	loc = pd.read_csv(path2,sep=' ',header = None).as_matrix()
 	loc[:,1]=loc[:,1]-60
 	ds = dicom.read_file(path1) 
@@ -84,6 +84,80 @@ def crop_roi():
 			path1 = './dcm_data/'+'{0:03}'.format(i)+'.dcm'
 			path2 = path1+'_Nodes.txt'
 			dcm_read(path1,path2,300,300,i)
+
+def ROI_BinaryMap(path1='./dcm_data/001.dcm',path2='./dcm_data/001.dcm_Nodes.txt',w=300,h=300,num=1):
+	loc = pd.read_csv(path2,sep=' ',header = None).as_matrix()
+	loc[:,1]=loc[:,1]-60
+	ds = dicom.read_file(path1) 
+	im = ds.pixel_array.reshape(768,1024,3)
+	crop_w = w
+	crop_h = h
+
+	gray = im[60:618,0:366]
+
+	for image in [gray]:
+		a = image
+
+		left = loc[np.argmin(loc[:,0])]
+		right = loc[np.argmax(loc[:,0])]
+		top = loc[np.argmax(loc[:,1])]
+		bottom = loc[np.argmin(loc[:,1])]
+		weight = right[0]-left[0]
+		height = top[1]-bottom[1]
+
+		for i in range(618-60):
+			for j in range(366):
+				# print(i,j)
+				if i>top[1] : a[i,j]=0
+				elif i<bottom[1] : a[i,j]=0
+				elif j>right[0] : a[i,j]=0
+				elif j<left[0] : a[i,j]=0
+				else: a[i,j]=255
+		
+
+		if crop_w==0 & crop_h==0:
+			plus_w = 0
+			remaind_w = 0
+			plus_h = 0
+			remaind_h = 0
+		else:
+			plus_w = int((crop_w-weight)/2)
+			remaind_w = int((crop_w-weight)%2)
+			plus_h = int((crop_h-height)/2)
+			remaind_h = int((crop_h-height)%2)
+	
+
+		crop_row0 = (bottom[1]-plus_h)
+		crop_row1 = (top[1]+plus_h+remaind_h)
+		crop_col0 = (left[0]-plus_w)
+		crop_col1 =  (right[0]+plus_w+remaind_w)
+
+		if crop_row0<0:
+			crop_row1 -= crop_row0
+			crop_row0 = 0
+		if crop_col0<0:
+			crop_col1 -= crop_col0
+			crop_col0 = 0
+		
+		a =a[crop_row0:crop_row1,crop_col0:crop_col1]
+		
+		a = resize(a,(300,300))
+		
+		# plt.imshow(a,cmap='gray')
+		# plt.show()
+		scipy.misc.imsave('./dcm_data_binaryMap/binMap_'+str(num)+'.png', a)
+
+def Get_ROI_Bin():
+	a = 0 
+	for i in range(1,267):
+		if os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm') &os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm_Nodes.txt') :
+			a+=1
+			print(i)
+			path1 = './dcm_data/'+'{0:03}'.format(i)+'.dcm'
+			path2 = path1+'_Nodes.txt'
+			ROI_BinaryMap(path1,path2,300,300,i)		
+
+
 
 def get_label():
 	y = pd.read_csv('./y.txt',sep='\t',header=None)
@@ -220,4 +294,4 @@ def remove_dot_save(t):
 			# plt.imshow(color_image,cmap='gray')
 			# plt.show()
 if __name__ == '__main__':
-	construct_roi_data()
+	 Get_ROI_Bin()

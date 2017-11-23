@@ -67,9 +67,12 @@ def shuffle(X,y):
 	random.shuffle(test_index)
 	random.shuffle(train_index)
 	random.shuffle(val_index)
-	print('test_index =',test_index)
-	print('val_index =',val_index)
-	print('train_index =',train_index)
+	print('tmp_test_index =',test_index)
+	print('tmp_val_index =',val_index)
+	print('tmp_train_index =',train_index)
+	np.save('./tmp_index/test_index',test_index)
+	np.save('./tmp_index/train_index',train_index)
+	np.save('./tmp_index/val_index',val_index)
 	return test_index,val_index,train_index
 
 def cnn(X,y):
@@ -87,10 +90,10 @@ def cnn(X,y):
 	# plt.imshow(X[0,:,:,1:4],cmap='gray')
 	# plt.show()
 	
-	# test_index,val_index,train_index = shuffle(X,y)
-	test_index = np.load('./index/test_index.npy') 
-	val_index = np.load('./index/val_index.npy')
-	train_index = np.load('./index/train_index.npy')
+	test_index,val_index,train_index = shuffle(X,y)
+	# test_index = np.load('./tmp_index/test_index.npy') 
+	# val_index = np.load('./tmp_index/val_index.npy')
+	# train_index = np.load('./tmp_index/train_index.npy')
 
 	test_X = X[test_index]
 	test_y = y[test_index]
@@ -98,27 +101,24 @@ def cnn(X,y):
 	val_y = y[val_index]
 	X = X[train_index]
 	y = y[train_index]
-	np.save('./index/test_index',test_index)
-	np.save('./index/train_index',train_index)
-	np.save('./index/val_index',val_index)
-	
+
 	model = Sequential()
-	model.add(Conv2D(48, kernel_size=(3,3),activation='relu',input_shape=(300,300,4)))
-	model.add(Conv2D(48, (3, 3), activation='relu'))
+	model.add(Conv2D(12, kernel_size=(3,3),activation='relu',input_shape=(300,300,4)))
+	model.add(Conv2D(12, (3, 3), activation='relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 
-	model.add(Conv2D(48, (3, 3), activation='relu'))
-	model.add(Conv2D(96, (3, 3), activation='relu'))
+	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(Conv2D(12, (3, 3), activation='relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
-	model.add(Dropout(0.25))
-	# model.add(Conv2D(64, (3, 3), activation='relu'))
-	# model.add(Conv2D(64, (3, 3), activation='relu'))
-	# model.add(MaxPooling2D(pool_size=(2, 2)))
+	
+	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+
 
 	model.add(Flatten())
 	model.add(Dense(64, activation='relu'))
 	model.add(Dense(32, activation='relu',kernel_regularizer=regularizers.l1(0.005)))
-	model.add(Dropout(0.25))
 	model.add(Dense(1, activation='sigmoid'))
 
 	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',precision,recall])
@@ -132,13 +132,13 @@ def cnn(X,y):
 
 if __name__ == '__main__':
 	X,y = load()
-	cnn(X,y)
+	# cnn(X,y)
 	model = LoadModel('./model/model_loss.h5',{'precision':precision,'recall':recall})
 
-	test_index = np.load('./index/test_index.npy')
-	val_index = np.load('./index/val_index.npy')
-	train_index = np.load('./index/train_index.npy')
-	# print(np.sort(test_index) ,'\n',np.sort(val_index) ,'\n',np.sort(train_index) )
+	test_index = np.load('./tmp_index/test_index.npy')
+	val_index = np.load('./tmp_index/val_index.npy')
+	train_index = np.load('./tmp_index/train_index.npy')
+	print(np.sort(test_index+1) ,'\n',np.sort(val_index+1) ,'\n',np.sort(train_index+1) )
 	test_X = X[test_index]
 	test_y = y[test_index]
 	val_X = X[val_index]
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 	X = X[train_index]
 	y = y[train_index]
 
-	print(model.predict(test_X))
+	# print(model.predict(test_X))
 	print(model.evaluate(test_X,test_y))
 	print(model.evaluate(val_X,val_y))
 	print(model.evaluate(X,y))
