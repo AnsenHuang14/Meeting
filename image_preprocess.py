@@ -95,10 +95,10 @@ def construct_roi_data():
 	data = np.array([0.0]*(300*300*263*4)).reshape(263,300,300,4)
 	for i in range(1,267):
 		print(i)
-		if os.path.exists('./dcm_data_image/gray_'+str(i)+'.png'):
-			im1 = scipy.misc.imread('./dcm_data_image/gray_'+str(i)+'.png', flatten=False,mode='L')
+		if os.path.exists('./image_remove_dot/gray_'+str(i)+'.png'):
+			im1 = scipy.misc.imread('./image_remove_dot/gray_'+str(i)+'.png', flatten=False,mode='L')
 			im1 = resize(im1,(300,300)).reshape(300,300,1)
-			im2 = scipy.misc.imread('./dcm_data_image/color_'+str(i)+'.png', flatten=False,mode='RGB')
+			im2 = scipy.misc.imread('./image_remove_dot/color_'+str(i)+'.png', flatten=False,mode='RGB')
 			im2 = resize(im2,(300,300))
 			im = np.concatenate([im1,im2],2)
 			data[t] = im
@@ -111,7 +111,7 @@ def construct_roi_data():
 	data[:,:,:,3]/=np.max(data[:,:,:,3])
 
 	data = data.astype('float32')
-	np.save('./dcm_data.npy',data)
+	# np.save('./Data/dcm_data.npy',data)
 
 def remove_dot_save(t):
 	if os.path.exists('./dcm_data_image/gray_'+str(t)+'.png'):
@@ -220,4 +220,4 @@ def remove_dot_save(t):
 			# plt.imshow(color_image,cmap='gray')
 			# plt.show()
 if __name__ == '__main__':
-	remove_dot_save(236)
+	construct_roi_data()
