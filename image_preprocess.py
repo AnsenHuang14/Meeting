@@ -112,7 +112,7 @@ def ROI_BinaryMap(path1='./dcm_data/001.dcm',path2='./dcm_data/001.dcm_Nodes.txt
 				elif i<bottom[1] : a[i,j]=0
 				elif j>right[0] : a[i,j]=0
 				elif j<left[0] : a[i,j]=0
-				else: a[i,j]=255
+				# else: a[i,j]=255
 		
 
 		if crop_w==0 & crop_h==0:
@@ -145,7 +145,8 @@ def ROI_BinaryMap(path1='./dcm_data/001.dcm',path2='./dcm_data/001.dcm_Nodes.txt
 		
 		# plt.imshow(a,cmap='gray')
 		# plt.show()
-		scipy.misc.imsave('./dcm_data_binaryMap/binMap_'+str(num)+'.png', a)
+		scipy.misc.imsave('./Meeting/binMap_'+str(num)+'.png', a)
+		# scipy.misc.imsave('./dcm_data_binaryMap/binMap_'+str(num)+'.png', a)
 
 def Get_ROI_Bin():
 	a = 0 
@@ -156,8 +157,6 @@ def Get_ROI_Bin():
 			path1 = './dcm_data/'+'{0:03}'.format(i)+'.dcm'
 			path2 = path1+'_Nodes.txt'
 			ROI_BinaryMap(path1,path2,300,300,i)		
-
-
 
 def get_label():
 	y = pd.read_csv('./y.txt',sep='\t',header=None)
@@ -293,5 +292,21 @@ def remove_dot_save(t):
 			# plt.show()
 			# plt.imshow(color_image,cmap='gray')
 			# plt.show()
+
+def contrast():
+	im1 = scipy.misc.imread('./image_remove_dot/gray_'+str(13)+'.png', flatten=False,mode='L')
+	im1 = resize(im1,(300,300))
+	im2 = scipy.misc.imread('./image_remove_dot/color_'+str(13)+'.png', flatten=False,mode='RGB')
+	im2 = resize(im2,(300,300))
+	im1 /=255
+	im2[:,:,0]/=np.max(im2[:,:,0])
+	im2[:,:,1]/=np.max(im2[:,:,1])
+	im2[:,:,2]/=np.max(im2[:,:,2])
+	scipy.misc.imsave('./Meeting/RG.png', im2[:,:,0]-im2[:,:,1])
+	scipy.misc.imsave('./Meeting/RB.png', im2[:,:,0]-im2[:,:,2])
+	scipy.misc.imsave('./Meeting/RGray.png', im2[:,:,0]-im1)
+
+	
 if __name__ == '__main__':
-	 Get_ROI_Bin()
+	contrast()
+	
