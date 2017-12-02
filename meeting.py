@@ -201,10 +201,7 @@ def cnn_ROI(X,y):
 			  verbose=1,
 			  validation_split=0.0,validation_data=(val_X,val_y),class_weight={0:65/263,1:(200/263)},callbacks=[checkpoint_loss,checkpoint_acc])
 
-def plot_confusion_matrix(cm, classes,
-						  normalize=True,
-						  title='Confusion matrix',
-						  cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, classes,normalize=True,title='Confusion matrix',cmap=plt.cm.Blues):
 	"""
 	This function prints and plots the confusion matrix.
 	Normalization can be applied by setting `normalize=True`.

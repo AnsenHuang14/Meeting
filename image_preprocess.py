@@ -52,8 +52,8 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 		# for i in range(left[0]-plus_w,right[0]+plus_w+remaind_w):
 		# 	a[bottom[1]-plus_h,i]=255
 		# 	a[top[1]+plus_h+remaind_h,i]=255
-		# for ind in loc:
-		# 	a[ind[1],ind[0]]=255
+		for ind in loc:
+			a[ind[1],ind[0]]=255
 
 		crop_row0 = (bottom[1]-plus_h)
 		crop_row1 = (top[1]+plus_h+remaind_h)
@@ -68,8 +68,10 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 			crop_col0 = 0
 		
 		a =a[crop_row0:crop_row1,crop_col0:crop_col1]
-		if t == 0:scipy.misc.imsave('./dcm_data_image/gray_'+str(num)+'.png', a)
-		else :scipy.misc.imsave('./dcm_data_image/color_'+str(num)+'.png', a)
+		# if t == 0:scipy.misc.imsave('./dcm_data_image/gray_'+str(num)+'.png', a)
+		# else :scipy.misc.imsave('./dcm_data_image/color_'+str(num)+'.png', a)
+		if t == 0:scipy.misc.imsave('./four node/gray_'+str(num)+'.png', a)
+		else :scipy.misc.imsave('./four node/color_'+str(num)+'.png', a)
 		t+=1
 		# plt.title(path2)
 		# plt.imshow(a)
@@ -79,7 +81,8 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 def crop_roi():
 	a = 0 
 	for i in range(1,267):
-		if os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm') &os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm_Nodes.txt') :
+		if  os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm') &os.path.exists('./dcm_data/'+'{0:03}'.format(i)+'.dcm_Nodes.txt') :
+			print(i)
 			a+=1
 			path1 = './dcm_data/'+'{0:03}'.format(i)+'.dcm'
 			path2 = path1+'_Nodes.txt'
@@ -308,5 +311,5 @@ def contrast():
 
 	
 if __name__ == '__main__':
-	contrast()
+	crop_roi()
 	
