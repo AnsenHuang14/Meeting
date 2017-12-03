@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from keras.applications.vgg16 import VGG16
 import scipy
+from keras import backend as K
+
 def deprocessimage(x):
 	"""
 	Hint: Normalize and Clip
@@ -49,10 +51,26 @@ def deprocess_image(x):
 	x = np.clip(x, 0, 255).astype('uint8')
 	return x
 
+def sensitivity(y_true, y_pred):
+	true_number = K.sum(y_true)
+	pred = K.round(y_pred)
+	TP = K.sum(pred*y_true)
+	return TP/true_number
+
+def specificity(y_true, y_pred):
+	pred = K.round(y_pred)
+	pred = K.abs(pred-1)
+	transpose_false = K.abs(y_true-1)
+	false_number = K.sum(transpose_false)
+	TN = K.sum(pred*transpose_false)
+	return TN/false_number
+
+
 def vis_img_in_filter(img_dim,layer_dict,model,
-					  layer_name ,img=None,):
+					  layer_name ,channel,img=None,):
 	layer_output = layer_dict[layer_name].output
 	img_ascs = list()
+	loss_list = list()
 	for filter_index in range(layer_output.shape[3]):
 		# build a loss function that maximizes the activation
 		# of the nth filter of the layer considered
@@ -71,7 +89,7 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		step = 5.
 
 		if img==None:
-			img_asc = np.random.random((1, img_dim[0],img_dim[1], 3))
+			img_asc = np.random.random((1, img_dim[0],img_dim[1],channel))
 			# img_asc = (img_asc - 0.5) * 20 + img_dim[0]
 		else: img_asc = np.array(img)
 		
@@ -83,10 +101,14 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 			loss_value, grads_value = iterate([img_asc])
 			img_asc = img_asc.astype('float32')
 			img_asc += grads_value.astype('float32') * step
-
+			
 		img_asc = img_asc[0]
-		img_ascs.append(deprocess_image(img_asc).reshape((img_dim[0],img_dim[1],3)))
-		
+		img_ascs.append(deprocess_image(img_asc).reshape((img_dim[0],img_dim[1],channel)))
+		loss_list.append(loss_value)
+	print(loss_list)
+	idx   = np.flip(np.argsort(loss_list),0)
+	print(type(img_ascs),idx)
+	img_ascs = [ img_ascs[i] for i in idx]
 	if layer_output.shape[3] >= 35:
 		plot_x, plot_y = 6, 6
 	elif layer_output.shape[3] >= 23:
@@ -97,7 +119,7 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		plot_x, plot_y = 1, 2
 	fig, ax = plt.subplots(plot_x, plot_y, figsize = (12, 12))
 	if img!=None:
-		ax[0, 0].imshow(img.reshape((img_dim[0], img_dim[1],3)))
+		ax[0, 0].imshow(img.reshape((img_dim[0], img_dim[1],channel)))
 		ax[0, 0].set_title('Input image')
 	fig.suptitle('Input image and %s filters' % (layer_name,))
 	fig.tight_layout(pad = 0.3, rect = [0, 0, 0.9, 0.9])
@@ -114,13 +136,17 @@ def main():
 	K.set_learning_phase(1)
 
 	model_name = "model"
-	model_path = "./model/model_acc_0.68_559ep.h5"
+	model_path = "./model/model_loss.h5"
 	model = VGG16(weights='imagenet', include_top=False)
-	
-	
-	layer_dict = dict([(layer.name, layer) for layer in model.layers])
-	img =  scipy.misc.imread('./image_remove_dot/color_4.png', flatten=False,mode='RGB').reshape(1,300,300,3)
-	vis_img_in_filter((50,50),layer_dict,model,'block5_conv3',img=None)
+	# model = load_model(model_path,{'sensitivity':sensitivity,'specificity':specificity})
+	model.summary()
+	# layer_dict = dict([(layer.name, layer) for layer in model.layers])
+	# # img =  scipy.misc.imread('./image_remove_dot/color_4.png', flatten=False,mode='RGB').reshape(1,300,300,3)
+	# i = 1
+	# for layer in model.layers: 
+	# 	if i != 1:
+	# 		vis_img_in_filter((50,50),layer_dict,model,layer.name,3,img=None)
+	# 	i+=1
 
 if __name__ == "__main__":
 	main()

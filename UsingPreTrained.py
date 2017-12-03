@@ -24,13 +24,16 @@ checkpoint_acc = ModelCheckpoint('./model/model_acc.h5', monitor = 'val_acc',ver
 def sensitivity(y_true, y_pred):
 	true_number = K.sum(y_true)
 	pred = K.round(y_pred)
-	TP = K.sum(pred[y_true==1]==1)
+	TP = K.sum(pred*y_true)
+	if true_number==0:return 0 
 	return TP/true_number
 
 def specificity(y_true, y_pred):
-	false_number = K.sum(y_true==0)
 	pred = K.round(y_pred)
-	TN = K.sum(pred[y_true==0]==0)
+	pred = K.abs(pred-1)
+	transpose_false = K.abs(y_true-1)
+	false_number = K.sum(transpose_false)
+	TN = K.sum(pred*transpose_false)
 	return TN/false_number
 
 def load():
@@ -90,28 +93,34 @@ if __name__ == '__main__':
 	X,y,test_X,test_y,val_X,val_y = prepare_for_train(X,y)
 	
 	base_model = VGG16(weights='imagenet', include_top=False)
+	base_model.summary()
 	layer_dict = dict([(layer.name, layer) for layer in base_model.layers])
 
-	inputlayer = Input(shape=(X.shape[1],X.shape[2],X.shape[3]))
+	inputlayer = Input(shape=(X.shape[1],X.shape[2],X.shape[3]-1))
 	conv1 = layer_dict['block1_conv1'](inputlayer)
 	conv1.trainable = False
 	conv2 = layer_dict['block1_conv2'](conv1)
 	conv2.trainable = False
 	max1 = MaxPooling2D(pool_size=(2, 2))(conv2)
 
-	conv3 = Conv2D(12, kernel_size=(3,3),activation='relu')(max1)
-	conv4 = Conv2D(12, kernel_size=(3,3),activation='relu')(conv3)
+	conv3 = Conv2D(24, kernel_size=(3,3),activation='relu')(conv2)
+	conv4 = Conv2D(24, kernel_size=(3,3),activation='relu')(conv3)
 	max2 =  MaxPooling2D(pool_size=(2, 2))(conv4)
 
-	output = Flatten()(max2)
-	output = Dense(32, activation='relu',kernel_regularizer=regularizers.l1(0.01))(output)
+	conv5 = Conv2D(48, kernel_size=(3,3),activation='relu')(max2)
+	conv6 = Conv2D(48, kernel_size=(3,3),activation='relu')(conv5)
+	max3 =  MaxPooling2D(pool_size=(2, 2))(conv6)
+
+	output = Flatten()(max3)
+	output = Dense(64, activation='relu',kernel_regularizer=regularizers.l1(0.00001))(output)
+	output = Dense(64, activation='relu',kernel_regularizer=regularizers.l1(0.00001))(output)
 	output = Dense(1, activation='sigmoid')(output)
-	Model = Model(input = inputlayer, output = output)
+	model = Model(input = inputlayer, output = output)
 
 	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',sensitivity,specificity])
-	model.fit(X, y,
+	model.fit(X[:,:,:,0:3], y,
 			  batch_size=20,
 			  epochs=150,
 			  verbose=1,
-			  validation_split=0.0,validation_data=(val_X,val_y),class_weight={0:65/263,1:(200/263)},callbacks=[checkpoint_loss,checkpoint_acc])
+			  validation_split=0.0,validation_data=(val_X[:,:,:,0:3],val_y),class_weight={0:1,1:1.1},callbacks=[checkpoint_loss,checkpoint_acc])
 	

@@ -45,6 +45,21 @@ def recall(y_true, y_pred):
 	recall = true_positives / (possible_positives + K.epsilon())
 	return recall
 
+def sensitivity(y_true, y_pred):
+	true_number = K.sum(y_true)
+	pred = K.round(y_pred)
+	TP = K.sum(pred*y_true)
+	return TP/true_number
+
+def specificity(y_true, y_pred):
+	pred = K.round(y_pred)
+	pred = K.abs(pred-1)
+	transpose_false = K.abs(y_true-1)
+	false_number = K.sum(transpose_false)
+	TN = K.sum(pred*transpose_false)
+	return TN/false_number
+
+
 def LoadModel(path,c=None):
 	model = load_model(path,custom_objects=c)
 	model.summary()
@@ -139,7 +154,7 @@ def cnn(X,y):
 	model.add(Dense(32, activation='relu',kernel_regularizer=regularizers.l1(0.005)))
 	model.add(Dense(1, activation='sigmoid'))
 
-	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',precision,recall])
+	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',sensitivity,specificity])
 
 	model.fit(X, y,
 			  batch_size=20,
@@ -341,7 +356,7 @@ def cnn_inception(X,ROI_X,y):
 	output = Dense(1, activation='sigmoid')(output)
 
 	model = Model([input_img,input_roi,input_roit],output)
-	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',precision,recall])
+	model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy',sensitivity,specificity])
 	model.fit({'input_1':X,'input_2':ROI_X,'input_3':ROI_X_T}, y,
 			  batch_size=20,
 			  epochs=150,
@@ -350,7 +365,7 @@ def cnn_inception(X,ROI_X,y):
 	# print(np.sort(test_index) ,'\n',np.sort(val_index) ,'\n',np.sort(train_index) )
 
 def get_performance_inception(X,ROI_X,y):
-	model = LoadModel('./model/model_loss.h5',{'precision':precision,'recall':recall})
+	model = LoadModel('./model/model_loss.h5',{'sensitivity':sensitivity,'specificity':specificity})
 
 	test_index = np.load('./tmp_index/test_index.npy')
 	val_index = np.load('./tmp_index/val_index.npy')
@@ -395,7 +410,7 @@ def get_performance_inception(X,ROI_X,y):
                       title='Training Confusion matrix')
 	plt.show()
 def get_performance(X,y):
-	model = LoadModel('./model/model_loss.h5',{'precision':precision,'recall':recall})
+	model = LoadModel('./model/model_loss.h5',{'sensitivity':sensitivity,'specificity':specificity})
 
 	test_index = np.load('./tmp_index/test_index.npy')
 	val_index = np.load('./tmp_index/val_index.npy')
@@ -416,15 +431,16 @@ def get_performance(X,y):
 	# plt.show()
 if __name__ == '__main__':
 	X,y = load()
-	ROI_X = ROI_mapping(load()[0])
-	cnn_inception(X,ROI_X,y)
+	# ROI_X = ROI_mapping(load()[0])
+	# cnn_inception(X,ROI_X,y)
 
-	X,y = load()
-	ROI_X = ROI_mapping(load()[0])
-	get_performance_inception(X,ROI_X,y)
+	# X,y = load()
+	# ROI_X = ROI_mapping(load()[0])
+	# get_performance_inception(X,ROI_X,y)
+
 	# cnn(X,y)
 	# get_performance(ROI_X,y)
-	# get_performance(X,y)
+	get_performance(X,y)
 	# cnn_ROI(ROI_X,y)
 	# get_performance(ROI_X,y)
 	# get_performance(X,y)
