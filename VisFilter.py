@@ -137,16 +137,17 @@ def main():
 
 	model_name = "model"
 	model_path = "./model/model_loss.h5"
-	model = VGG16(weights='imagenet', include_top=False)
-	# model = load_model(model_path,{'sensitivity':sensitivity,'specificity':specificity})
+	# model = VGG16(weights='imagenet', include_top=False)
+	model = load_model(model_path,{'sensitivity':sensitivity,'specificity':specificity})
 	model.summary()
-	# layer_dict = dict([(layer.name, layer) for layer in model.layers])
+	layer_dict = dict([(layer.name, layer) for layer in model.layers])
+	# vis_img_in_filter((300,300),layer_dict,model,'block1_conv1',3,img=None)
 	# # img =  scipy.misc.imread('./image_remove_dot/color_4.png', flatten=False,mode='RGB').reshape(1,300,300,3)
-	# i = 1
-	# for layer in model.layers: 
-	# 	if i != 1:
-	# 		vis_img_in_filter((50,50),layer_dict,model,layer.name,3,img=None)
-	# 	i+=1
+	i = 1
+	for layer in model.layers: 
+		# if i != 1:
+		vis_img_in_filter((300,300),layer_dict,model,layer.name,4,img=None)
+		i+=1
 
 if __name__ == "__main__":
 	main()

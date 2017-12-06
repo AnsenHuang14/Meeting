@@ -123,10 +123,10 @@ def cnn(X,y):
 	# plt.imshow(X[0,:,:,1:4],cmap='gray')
 	# plt.show()
 	
-	test_index,val_index,train_index = shuffle(X,y)
-	# test_index = np.load('./tmp_index/test_index.npy') 
-	# val_index = np.load('./tmp_index/val_index.npy')
-	# train_index = np.load('./tmp_index/train_index.npy')
+	# test_index,val_index,train_index = shuffle(X,y)
+	test_index = np.load('./tmp_index/test_index.npy') 
+	val_index = np.load('./tmp_index/val_index.npy')
+	train_index = np.load('./tmp_index/train_index.npy')
 
 	test_X = X[test_index]
 	test_y = y[test_index]
@@ -136,18 +136,19 @@ def cnn(X,y):
 	y = y[train_index]
 
 	model = Sequential()
-	model.add(Conv2D(12, kernel_size=(3,3),activation='relu',input_shape=(300,300,4)))
-	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(Conv2D(24, kernel_size=(2,2),activation='relu',input_shape=(300,300,4)))
+	model.add(Conv2D(24, (2, 2), activation='relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 
-	model.add(Conv2D(12, (3, 3), activation='relu'))
-	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(Conv2D(24, (3, 3), activation='relu'))
+	model.add(Conv2D(24, (3, 3), activation='relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 	
-	model.add(Conv2D(12, (3, 3), activation='relu'))
-	model.add(Conv2D(12, (3, 3), activation='relu'))
+	model.add(Conv2D(24, (3, 3), activation='relu'))
+	model.add(Conv2D(24, (3, 3), activation='relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 
+	
 
 	model.add(Flatten())
 	model.add(Dense(64, activation='relu'))
@@ -158,7 +159,7 @@ def cnn(X,y):
 
 	model.fit(X, y,
 			  batch_size=20,
-			  epochs=25,
+			  epochs=100,
 			  verbose=1,
 			  validation_split=0.0,validation_data=(val_X,val_y),class_weight={0:65/263,1:(200/263)},callbacks=[checkpoint_loss,checkpoint_acc])
 
@@ -410,7 +411,7 @@ def get_performance_inception(X,ROI_X,y):
                       title='Training Confusion matrix')
 	plt.show()
 def get_performance(X,y):
-	model = LoadModel('./model/model_loss.h5',{'sensitivity':sensitivity,'specificity':specificity})
+	model = LoadModel('./model/model4channel_loss.h5',{'sensitivity':sensitivity,'specificity':specificity})
 
 	test_index = np.load('./tmp_index/test_index.npy')
 	val_index = np.load('./tmp_index/val_index.npy')
@@ -427,8 +428,19 @@ def get_performance(X,y):
 	print(model.evaluate(test_X,test_y))
 	print(model.evaluate(val_X,val_y))
 	print(model.evaluate(X,y))
-	# plt.imshow(X[5,:,:,1:4],cmap='gray')
-	# plt.show()
+	cnf_matrix = confusion_matrix(test_y, [ 1 if i>0.5 else 0  for i in model.predict(test_X)], labels=[0,1])
+	plt.figure()
+	plot_confusion_matrix(cnf_matrix, classes=['benign','malignant'],
+                      title='Testing Confusion matrix')
+	cnf_matrix = confusion_matrix(val_y, [ 1 if i>0.5 else 0  for i in model.predict(val_X)], labels=[0,1])
+	plt.figure()
+	plot_confusion_matrix(cnf_matrix, classes=['benign','malignant'],
+                      title='Validation Confusion matrix')
+	cnf_matrix = confusion_matrix(y, [ 1 if i>0.5 else 0  for i in model.predict(X)], labels=[0,1])
+	plt.figure()
+	plot_confusion_matrix(cnf_matrix, classes=['benign','malignant'],
+                      title='Training Confusion matrix')
+	plt.show()
 if __name__ == '__main__':
 	X,y = load()
 	# ROI_X = ROI_mapping(load()[0])

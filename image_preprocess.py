@@ -52,6 +52,11 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 		# for i in range(left[0]-plus_w,right[0]+plus_w+remaind_w):
 		# 	a[bottom[1]-plus_h,i]=255
 		# 	a[top[1]+plus_h+remaind_h,i]=255
+		if t == 0 :
+			f = open('./Location/'+str(num)+'.txt', 'w')
+			for ind in loc:
+				f.write(str(ind[1])+','+str(ind[0])+'\n')
+
 		for ind in loc:
 			a[ind[1],ind[0]]=255
 
@@ -309,7 +314,59 @@ def contrast():
 	scipy.misc.imsave('./Meeting/RB.png', im2[:,:,0]-im2[:,:,2])
 	scipy.misc.imsave('./Meeting/RGray.png', im2[:,:,0]-im1)
 
-	
+def calculateAngle(path='./Location/',num=0):
+	im1 = scipy.misc.imread('./four node/gray_'+str(num)+'.png', flatten=False,mode='L')
+	loc = list()
+	f = open(path+str(num)+'.txt', "r")
+	[loc.append(f.readline().split(','))for i in range(4)]
+	loc = np.array(loc).astype('int')
+	a = np.sqrt(np.sum((loc[0]-loc[2])**2))
+	b = np.sqrt((loc[0][1]-loc[2][1])**2)
+	c = np.sqrt(np.sum((loc[1]-loc[3])**2))
+	d = np.sqrt((loc[1][1]-loc[3][1])**2)
+	e = np.sqrt(np.sum((loc[0]-loc[3])**2))
+	f = np.sqrt((loc[0][1]-loc[3][1])**2)
+	g = np.sqrt(np.sum((loc[1]-loc[2])**2))
+	h = np.sqrt((loc[1][1]-loc[2][1])**2)
+	long_axis = max(a,c,e,g)
+
+	if long_axis==a:
+		print('a')
+		arccs = np.arccos(b/a)
+		degree = np.degrees(arccs)
+		if loc[0][0]>loc[2][0] and loc[0][1]<loc[2][1] :degree=-degree
+		
+	elif long_axis==c:
+		print('c')
+		arccs = np.arccos(d/c)
+		degree = np.degrees(arccs)
+		if loc[1][0]>loc[3][0] and loc[1][1]<loc[3][1]:degree=-degree
+		
+	elif long_axis==e:
+		print('e')
+		arccs = np.arccos(f/e)
+		degree = np.degrees(arccs)
+		if loc[0][0]>loc[3][0] and loc[0][1]<loc[3][1]:degree=-degree
+		
+	elif long_axis==g:
+		print('g')
+		arccs = np.arccos(h/g)
+		degree = np.degrees(arccs)
+		if loc[1][0]>loc[2][0] and loc[1][1]<loc[2][1]:degree=-degree
+		
+	print(degree,arccs)
+	print(loc)
+	# print((loc[0]-loc[2]))
+	# print((loc[0][1]-loc[2][1]))
+	im3 = scipy.misc.imrotate(im1,degree)
+	plt.imshow(im3,cmap='gray')
+	plt.show()
+
 if __name__ == '__main__':
-	crop_roi()
-	
+	# crop_roi()
+	for i in range(1,267):
+		if  os.path.exists('./Location/'+str(i)+'.txt'): 
+			print('--------------',i,'--------------')
+			calculateAngle('./Location/',i)
+	# calculateAngle('./Location/',31)
+	# calculateAngle('./Location/',20)
