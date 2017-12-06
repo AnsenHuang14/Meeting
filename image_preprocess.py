@@ -52,10 +52,11 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 		# for i in range(left[0]-plus_w,right[0]+plus_w+remaind_w):
 		# 	a[bottom[1]-plus_h,i]=255
 		# 	a[top[1]+plus_h+remaind_h,i]=255
-		if t == 0 :
-			f = open('./Location/'+str(num)+'.txt', 'w')
-			for ind in loc:
-				f.write(str(ind[1])+','+str(ind[0])+'\n')
+
+		# if t == 0 :
+		# 	f = open('./Location/'+str(num)+'.txt', 'w')
+		# 	for ind in loc:
+		# 		f.write(str(ind[1])+','+str(ind[0])+'\n')
 
 		for ind in loc:
 			a[ind[1],ind[0]]=255
@@ -73,14 +74,18 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 			crop_col0 = 0
 		
 		a =a[crop_row0:crop_row1,crop_col0:crop_col1]
+		degree = calculateAngle(path='./Location/',num=num)
+		print(np.argwhere(a==255),a.shape)
+		a = scipy.misc.imrotate(a,degree)
+		print(np.argwhere(a==255))
 		# if t == 0:scipy.misc.imsave('./dcm_data_image/gray_'+str(num)+'.png', a)
 		# else :scipy.misc.imsave('./dcm_data_image/color_'+str(num)+'.png', a)
-		if t == 0:scipy.misc.imsave('./four node/gray_'+str(num)+'.png', a)
-		else :scipy.misc.imsave('./four node/color_'+str(num)+'.png', a)
+		# if t == 0:scipy.misc.imsave('./four node/gray_'+str(num)+'.png', a)
+		# else :scipy.misc.imsave('./four node/color_'+str(num)+'.png', a)
 		t+=1
 		# plt.title(path2)
-		# plt.imshow(a)
-		# plt.show()
+		plt.imshow(a)
+		plt.show()
 
 # crop all images  	
 def crop_roi():
@@ -335,38 +340,42 @@ def calculateAngle(path='./Location/',num=0):
 		arccs = np.arccos(b/a)
 		degree = np.degrees(arccs)
 		if loc[0][0]>loc[2][0] and loc[0][1]<loc[2][1] :degree=-degree
-		
+		if loc[0][0]<loc[2][0] and loc[0][1]>loc[2][1] :degree=-degree
 	elif long_axis==c:
 		print('c')
 		arccs = np.arccos(d/c)
 		degree = np.degrees(arccs)
 		if loc[1][0]>loc[3][0] and loc[1][1]<loc[3][1]:degree=-degree
-		
+		if loc[1][0]<loc[3][0] and loc[1][1]>loc[3][1]:degree=-degree
+
 	elif long_axis==e:
 		print('e')
 		arccs = np.arccos(f/e)
 		degree = np.degrees(arccs)
 		if loc[0][0]>loc[3][0] and loc[0][1]<loc[3][1]:degree=-degree
+		if loc[0][0]<loc[3][0] and loc[0][1]>loc[3][1]:degree=-degree
 		
 	elif long_axis==g:
 		print('g')
 		arccs = np.arccos(h/g)
 		degree = np.degrees(arccs)
 		if loc[1][0]>loc[2][0] and loc[1][1]<loc[2][1]:degree=-degree
-		
-	print(degree,arccs)
-	print(loc)
-	# print((loc[0]-loc[2]))
-	# print((loc[0][1]-loc[2][1]))
+		if loc[1][0]<loc[2][0] and loc[1][1]>loc[2][1]:degree=-degree
+	
+	# true_loc=np.argwhere(im1==255)
 	im3 = scipy.misc.imrotate(im1,degree)
-	plt.imshow(im3,cmap='gray')
-	plt.show()
+	# print(true_loc)
+	# print(np.argwhere(im3>=np.max(im3)-10))
+	# print(np.max(im3))
+	# plt.imshow(im3,cmap='gray')
+	# plt.show()
+	return degree
 
 if __name__ == '__main__':
-	# crop_roi()
-	for i in range(1,267):
-		if  os.path.exists('./Location/'+str(i)+'.txt'): 
-			print('--------------',i,'--------------')
-			calculateAngle('./Location/',i)
+	crop_roi()
+	# for i in range(267):
+	# 	if  os.path.exists('./Location/'+str(i)+'.txt'): 
+	# 		print('--------------',i,'--------------')
+	# 		calculateAngle('./Location/',i)
 	# calculateAngle('./Location/',31)
 	# calculateAngle('./Location/',20)
