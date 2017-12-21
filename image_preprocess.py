@@ -58,8 +58,9 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 		# 	for ind in loc:
 		# 		f.write(str(ind[1])+','+str(ind[0])+'\n')
 
-		for ind in loc:
-			a[ind[1],ind[0]]=255
+		# label 4 node dot
+		# for ind in loc:
+		# 	a[ind[1],ind[0]]=255
 
 		crop_row0 = (bottom[1]-plus_h)
 		crop_row1 = (top[1]+plus_h+remaind_h)
@@ -74,18 +75,18 @@ def dcm_read(path1='./dcm_data/003.dcm',path2='./dcm_data/003.dcm',w=300,h=300,n
 			crop_col0 = 0
 		
 		a =a[crop_row0:crop_row1,crop_col0:crop_col1]
-		degree = calculateAngle(path='./Location/',num=num)
-		print(np.argwhere(a==255),a.shape)
-		a = scipy.misc.imrotate(a,degree)
-		print(np.argwhere(a==255))
-		# if t == 0:scipy.misc.imsave('./dcm_data_image/gray_'+str(num)+'.png', a)
-		# else :scipy.misc.imsave('./dcm_data_image/color_'+str(num)+'.png', a)
+		# degree = calculateAngle(path='./Location/',num=num)
+		# print(np.argwhere(a==255),a.shape)
+		# a = scipy.misc.imrotate(a,degree)
+		# print(np.argwhere(a==255))
+		if t == 0:scipy.misc.imsave('./dcm_data_image/gray_'+str(num)+'.png', a)
+		else :scipy.misc.imsave('./dcm_data_image/color_'+str(num)+'.png', a)
 		# if t == 0:scipy.misc.imsave('./four node/gray_'+str(num)+'.png', a)
 		# else :scipy.misc.imsave('./four node/color_'+str(num)+'.png', a)
 		t+=1
 		# plt.title(path2)
-		plt.imshow(a)
-		plt.show()
+		# plt.imshow(a)
+		# plt.show()
 
 # crop all images  	
 def crop_roi():
@@ -96,7 +97,7 @@ def crop_roi():
 			a+=1
 			path1 = './dcm_data/'+'{0:03}'.format(i)+'.dcm'
 			path2 = path1+'_Nodes.txt'
-			dcm_read(path1,path2,300,300,i)
+			dcm_read(path1,path2,366,366,i)
 
 def ROI_BinaryMap(path1='./dcm_data/001.dcm',path2='./dcm_data/001.dcm_Nodes.txt',w=300,h=300,num=1):
 	loc = pd.read_csv(path2,sep=' ',header = None).as_matrix()
@@ -172,7 +173,7 @@ def Get_ROI_Bin():
 			ROI_BinaryMap(path1,path2,300,300,i)		
 
 def get_label():
-	y = pd.read_csv('./y.txt',sep='\t',header=None)
+	y = pd.read_csv('./data/y.txt',sep='\t',header=None)
 	y.columns = ['id','label']
 	print(len(y))
 # convert image to npy and range to 0,1
@@ -202,18 +203,18 @@ def construct_roi_data():
 def remove_dot_save(t):
 	if os.path.exists('./dcm_data_image/gray_'+str(t)+'.png'):
 			im1 = scipy.misc.imread('./dcm_data_image/gray_'+str(t)+'.png', flatten=False,mode='L')
-			im1 = resize(im1,(300,300)).reshape(300,300,1)
+			im1 = resize(im1,(366,366)).reshape(366,366,1)
 			im2 = scipy.misc.imread('./dcm_data_image/color_'+str(t)+'.png', flatten=False,mode='RGB')
-			im2 = resize(im2,(300,300))
+			im2 = resize(im2,(366,366))
 			im = np.concatenate([im1,im2],2)
 			threshold = 0.8
 			threshold2 = 0.9
 			# for row -------------------------------
 			changeindex = list()
-			for i  in range(300):
+			for i  in range(366):
 				im_tmp = im[i:(i+1),:,:]
 				gray = 0.2989 * im[i:(i+1),:,1] + 0.5870 * im[i:(i+1),:,2] + 0.1140 * im[i:(i+1),:,3]
-				if np.sum(im_tmp[:,:,0]-gray<0.03)/300<threshold :
+				if np.sum(im_tmp[:,:,0]-gray<0.03)/366<threshold :
 					print(i,'row dotted line')
 					changeindex.append(i)
 			# -------------------
@@ -228,7 +229,7 @@ def remove_dot_save(t):
 						im[i,:,0] = 0.2989 * im[i-2,:,1] + 0.5870 * im[i-2,:,2] + 0.1140 * im[i-2,:,3]
 					else: im[i,:,0] = 0.2989 * im[i,:,1] + 0.5870 * im[i,:,2] + 0.1140 * im[i,:,3]
 			if len(changeindex)==2 and changeindex[1]>150 :
-				for i in range(changeindex[1],300):
+				for i in range(changeindex[1],366):
 					if i == changeindex[1] or i == changeindex[1]+1 :
 						if i+2 >=299:
 							im[i,:,0] = im[i-2,:,0] 
@@ -243,7 +244,7 @@ def remove_dot_save(t):
 					if i == changeindex[1] or i == changeindex[1]+1 :
 						im[i,:,0] = 0.2989 * im[i-2,:,1] + 0.5870 * im[i-2,:,2] + 0.1140 * im[i-2,:,3]
 					else: im[i,:,0] = 0.2989 * im[i,:,1] + 0.5870 * im[i,:,2] + 0.1140 * im[i,:,3]
-				for i in range(changeindex[2],300):
+				for i in range(changeindex[2],366):
 					if i == changeindex[2] or i == changeindex[2]+1 :
 						if i+2 >=299:
 							im[i,:,0] = im[i-2,:,0] 
@@ -254,10 +255,10 @@ def remove_dot_save(t):
 			
 			# for column -----------------------------
 			changeindex = list()
-			for i  in range(300):
+			for i  in range(366):
 				im_tmp = im[:,i:(i+1),:]
 				gray = 0.2989 * im[:,i:(i+1),1] + 0.5870 * im[:,i:(i+1),2] + 0.1140 * im[:,i:(i+1),3]
-				if np.sum(im_tmp[:,:,0]-gray<0.03)/300<threshold2 :
+				if np.sum(im_tmp[:,:,0]-gray<0.03)/366<threshold2 :
 					print(i,'column dotted line')
 					changeindex.append(i)
 			#--------------------
@@ -289,7 +290,7 @@ def remove_dot_save(t):
 					if i == changeindex[1] or i == changeindex[1]+1 :
 						im[:,i,0] = 0.2989 * im[:,i-2,1] + 0.5870 * im[:,i-2,2] + 0.1140 * im[:,i-2,3]
 					else: im[:,i,0] = 0.2989 * im[:,i,1] + 0.5870 * im[:,i,2] + 0.1140 * im[:,i,3]
-				for i in range(changeindex[2],300):
+				for i in range(changeindex[2],366):
 					if i == changeindex[2] or i == changeindex[2]+1 :
 						if i+2>=299:
 							im[:,i,0] = im[:,i-2,0] 
@@ -298,9 +299,9 @@ def remove_dot_save(t):
 					else: im[:,i,0] = 0.2989 * im[:,i,1] + 0.5870 * im[:,i,2] + 0.1140 * im[:,i,3]
 			gray_image = im[:,:,0].reshape(im.shape[0],im.shape[1])
 			color_image = im[:,:,1:4].reshape(im.shape[0],im.shape[1],3)
-			scipy.misc.imsave('./image_remove_dot/gray_'+str(t)+'.png',gray_image )
-			scipy.misc.imsave('./image_remove_dot/color_'+str(t)+'.png', color_image)
-			# print('save',t)
+			scipy.misc.imsave('./image_remove_dot(366,366)/gray_'+str(t)+'.png',gray_image )
+			scipy.misc.imsave('./image_remove_dot(366,366)/color_'+str(t)+'.png', color_image)
+			print('save',t)
 			# plt.imshow(gray_image,cmap='gray')
 			# plt.show()
 			# plt.imshow(color_image,cmap='gray')
@@ -321,6 +322,7 @@ def contrast():
 
 def calculateAngle(path='./Location/',num=0):
 	im1 = scipy.misc.imread('./four node/gray_'+str(num)+'.png', flatten=False,mode='L')
+	# im1 = scipy.misc.imread('./image_remove_dot/gray_'+str(num)+'.png', flatten=False,mode='L')
 	loc = list()
 	f = open(path+str(num)+'.txt', "r")
 	[loc.append(f.readline().split(','))for i in range(4)]
@@ -334,7 +336,7 @@ def calculateAngle(path='./Location/',num=0):
 	g = np.sqrt(np.sum((loc[1]-loc[2])**2))
 	h = np.sqrt((loc[1][1]-loc[2][1])**2)
 	long_axis = max(a,c,e,g)
-
+	
 	if long_axis==a:
 		print('a')
 		arccs = np.arccos(b/a)
@@ -362,20 +364,34 @@ def calculateAngle(path='./Location/',num=0):
 		if loc[1][0]>loc[2][0] and loc[1][1]<loc[2][1]:degree=-degree
 		if loc[1][0]<loc[2][0] and loc[1][1]>loc[2][1]:degree=-degree
 	
-	# true_loc=np.argwhere(im1==255)
-	im3 = scipy.misc.imrotate(im1,degree)
+	rot_loc = np.zeros(8).reshape(4,2)
+	for i in range(4):
+		rot_loc[i,0]=150-loc[i,0]
+		rot_loc[i,1]=loc[i,1]-150
+	c, s = np.cos(-degree), np.sin(-degree)
+	R = np.matrix('{} {}; {} {}'.format(c, -s, s, c))
+	rot_loc = np.matmul(R,rot_loc.T).T
+	for i in range(4):
+		rot_loc[i,0]=rot_loc[i,0]+150
+		rot_loc[i,1]=150-rot_loc[i,1]
+	rot_loc=rot_loc.astype('int')	
+	print(rot_loc)
+	im3 = scipy.ndimage.interpolation.rotate(im1,degree,reshape =False,prefilter =False)
+	# for i in range(4):
+	# 	im3[rot_loc[i,0],rot_loc[i,1]]=255
 	# print(true_loc)
-	# print(np.argwhere(im3>=np.max(im3)-10))
+	# print(np.argwhere(im3==np.max(im3)))
 	# print(np.max(im3))
-	# plt.imshow(im3,cmap='gray')
-	# plt.show()
+	# scipy.misc.imsave('./Rotated_image/'+str(num)+'.png', im3)
+	plt.imshow(im3,cmap='gray')
+	plt.show()
 	return degree
 
 if __name__ == '__main__':
-	crop_roi()
-	# for i in range(267):
-	# 	if  os.path.exists('./Location/'+str(i)+'.txt'): 
-	# 		print('--------------',i,'--------------')
-	# 		calculateAngle('./Location/',i)
-	# calculateAngle('./Location/',31)
-	# calculateAngle('./Location/',20)
+	# crop_roi()
+	for i in range(267):
+		if  os.path.exists('./Location/'+str(i)+'.txt'): 
+			print('--------------',i,'--------------')
+			# calculateAngle('./Location/',i)
+			remove_dot_save(i)
+	
