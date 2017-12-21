@@ -65,6 +65,17 @@ def specificity(y_true, y_pred):
 	TN = K.sum(pred*transpose_false)
 	return TN/false_number
 
+def ss(y_true, y_pred):
+	true_number = K.sum(y_true)
+	pred = K.round(y_pred)
+	TP = K.sum(pred*y_true)
+	sens = TP/true_number
+	pred2 = K.abs(pred-1)
+	transpose_false = K.abs(y_true-1)
+	false_number = K.sum(transpose_false)
+	TN = K.sum(pred2*transpose_false)
+	spec = TN/false_number
+	return K.max([sens,spec])*0.2+K.min([sens,spec])*0.8
 
 def vis_img_in_filter(img_dim,layer_dict,model,
 					  layer_name ,channel,img=None,):
@@ -105,9 +116,9 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		img_asc = img_asc[0]
 		img_ascs.append(deprocess_image(img_asc).reshape((img_dim[0],img_dim[1],channel)))
 		loss_list.append(loss_value)
-	print(loss_list)
+	# print(loss_list)
 	idx   = np.flip(np.argsort(loss_list),0)
-	print(type(img_ascs),idx)
+	# print(type(img_ascs),idx)
 	img_ascs = [ img_ascs[i] for i in idx]
 	if layer_output.shape[3] >= 35:
 		plot_x, plot_y = 6, 6
@@ -116,19 +127,24 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 	elif layer_output.shape[3] >= 11:
 		plot_x, plot_y = 2, 6
 	else:
-		plot_x, plot_y = 1, 2
+		plot_x, plot_y = int(int(layer_output.shape[3])/2), 2
 	fig, ax = plt.subplots(plot_x, plot_y, figsize = (12, 12))
 	if img!=None:
 		ax[0, 0].imshow(img.reshape((img_dim[0], img_dim[1],channel)))
 		ax[0, 0].set_title('Input image')
 	fig.suptitle('Input image and %s filters' % (layer_name,))
 	fig.tight_layout(pad = 0.3, rect = [0, 0, 0.9, 0.9])
+	t = 0
 	for (x, y) in [(i, j) for i in range(plot_x) for j in range(plot_y)]:
 		if img!=None and x == 0 and y == 0:
 		    continue
-		ax[x, y].imshow(img_ascs[x * plot_y + y - 1])
-		ax[x, y].set_title('filter %d' % (x * plot_y + y - 1))
-
+		if t<int(layer_output.shape[3]):
+			ax[x, y].imshow(img_ascs[x * plot_y + y ])
+			ax[x, y].set_title('filter %d' % (x * plot_y + y ))
+		# else :
+		# 	ax[x, y].imshow(img_ascs[x * plot_y + y-1 ])
+		# 	ax[x, y].set_title('filter %d' % (x * plot_y + y-1 ))
+		t+=1
 	fig.savefig(layer_name+'.png', dpi=100)
 
 def main():
@@ -136,17 +152,18 @@ def main():
 	K.set_learning_phase(1)
 
 	model_name = "model"
-	model_path = "./model/model_loss.h5"
+	model_path = "./model/model_trad_ss_f3.h5"
+	# model_path = "./model/model_sep_ss_f.h5"
 	# model = VGG16(weights='imagenet', include_top=False)
-	model = load_model(model_path,{'sensitivity':sensitivity,'specificity':specificity})
+	model = load_model(model_path,{'ss':ss,'sensitivity':sensitivity,'specificity':specificity})
 	model.summary()
 	layer_dict = dict([(layer.name, layer) for layer in model.layers])
 	# vis_img_in_filter((300,300),layer_dict,model,'block1_conv1',3,img=None)
 	# # img =  scipy.misc.imread('./image_remove_dot/color_4.png', flatten=False,mode='RGB').reshape(1,300,300,3)
 	i = 1
 	for layer in model.layers: 
-		# if i != 1:
-		vis_img_in_filter((300,300),layer_dict,model,layer.name,4,img=None)
+		if i != 1:
+			vis_img_in_filter((300,300),layer_dict,model,layer.name,4,img=None)
 		i+=1
 
 if __name__ == "__main__":

@@ -177,16 +177,16 @@ def get_label():
 	y.columns = ['id','label']
 	print(len(y))
 # convert image to npy and range to 0,1
-def construct_roi_data():
+def construct_data(path='./image_remove_dot(366,366)/',image_shape = (366,366)):
 	t = 0
-	data = np.array([0.0]*(300*300*263*4)).reshape(263,300,300,4)
+	data = np.array([0.0]*(image_shape[0]*image_shape[1]*263*4)).reshape(263,image_shape[0],image_shape[1],4)
 	for i in range(1,267):
 		print(i)
-		if os.path.exists('./image_remove_dot/gray_'+str(i)+'.png'):
-			im1 = scipy.misc.imread('./image_remove_dot/gray_'+str(i)+'.png', flatten=False,mode='L')
-			im1 = resize(im1,(300,300)).reshape(300,300,1)
-			im2 = scipy.misc.imread('./image_remove_dot/color_'+str(i)+'.png', flatten=False,mode='RGB')
-			im2 = resize(im2,(300,300))
+		if os.path.exists(path+'gray_'+str(i)+'.png'):
+			im1 = scipy.misc.imread(path+'gray_'+str(i)+'.png', flatten=False,mode='L')
+			im1 = resize(im1,image_shape).reshape(image_shape[0],image_shape[1],1)
+			im2 = scipy.misc.imread(path+'color_'+str(i)+'.png', flatten=False,mode='RGB')
+			im2 = resize(im2,image_shape)
 			im = np.concatenate([im1,im2],2)
 			data[t] = im
 			# plt.imshow(data[t,:,:,1:4].reshape(300,300,3),cmap='gray')
@@ -198,7 +198,7 @@ def construct_roi_data():
 	data[:,:,:,3]/=np.max(data[:,:,:,3])
 
 	data = data.astype('float32')
-	# np.save('./Data/dcm_data.npy',data)
+	np.save('./Data/dcm_data_366_4channel.npy',data)
 
 def remove_dot_save(t):
 	if os.path.exists('./dcm_data_image/gray_'+str(t)+'.png'):
@@ -276,7 +276,7 @@ def remove_dot_save(t):
 					else: im[:,i,0] = 0.2989 * im[:,i,1] + 0.5870 * im[:,i,2] + 0.1140 * im[:,i,3]
 
 			if len(changeindex)==2 and changeindex[1]>150 :
-				for i in range(changeindex[1],300):
+				for i in range(changeindex[1],366):
 					if i == changeindex[1] or i == changeindex[1]+1 :
 						if i+2>=299:
 							im[:,i,0] = im[:,i-2,0] 
@@ -389,9 +389,10 @@ def calculateAngle(path='./Location/',num=0):
 
 if __name__ == '__main__':
 	# crop_roi()
-	for i in range(267):
-		if  os.path.exists('./Location/'+str(i)+'.txt'): 
-			print('--------------',i,'--------------')
-			# calculateAngle('./Location/',i)
-			remove_dot_save(i)
-	
+	# for i in range(267):
+	# for i in [10,120,135,141,143,171,236]:	
+	# 	if  os.path.exists('./Location/'+str(i)+'.txt'): 
+	# 		print('--------------',i,'--------------')
+	# 		# calculateAngle('./Location/',i)
+	# 		# remove_dot_save(i)
+	construct_data()
