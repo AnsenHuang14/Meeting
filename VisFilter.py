@@ -78,7 +78,7 @@ def ss(y_true, y_pred):
 	return K.max([sens,spec])*0.2+K.min([sens,spec])*0.8
 
 def vis_img_in_filter(img_dim,layer_dict,model,
-					  layer_name ,channel,img=None,):
+					  layer_name ,channel,img=None,usingimg=False,):
 	layer_output = layer_dict[layer_name].output
 	img_ascs = list()
 	loss_list = list()
@@ -99,7 +99,7 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		# step size for gradient ascent
 		step = 5.
 
-		if img==None:
+		if usingimg==False:
 			img_asc = np.random.random((1, img_dim[0],img_dim[1],channel))
 			# img_asc = (img_asc - 0.5) * 20 + img_dim[0]
 		else: img_asc = np.array(img)
@@ -124,22 +124,32 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		plot_x, plot_y = 6, 6
 	elif layer_output.shape[3] >= 23:
 		plot_x, plot_y = 4, 6
+	elif layer_output.shape[3] == 16:
+		plot_x, plot_y = 4, 4	
 	elif layer_output.shape[3] >= 11:
 		plot_x, plot_y = 2, 6
 	else:
 		plot_x, plot_y = int(int(layer_output.shape[3])/2), 2
 	fig, ax = plt.subplots(plot_x, plot_y, figsize = (12, 12))
-	if img!=None:
-		ax[0, 0].imshow(img.reshape((img_dim[0], img_dim[1],channel)))
+	if usingimg:
+		#--gray mode---
+		ax[0, 0].imshow(img[:,:,:,0].reshape((img_dim[0], img_dim[1])),cmap='gray')
+		#---elastography
+		# ax[0, 0].imshow(img[:,:,:,1:4].reshape((img_dim[0], img_dim[1],3)))
+		# ax[0, 0].imshow(img.reshape((img_dim[0], img_dim[1],channel)))
 		ax[0, 0].set_title('Input image')
 	fig.suptitle('Input image and %s filters' % (layer_name,))
 	fig.tight_layout(pad = 0.3, rect = [0, 0, 0.9, 0.9])
 	t = 0
 	for (x, y) in [(i, j) for i in range(plot_x) for j in range(plot_y)]:
-		if img!=None and x == 0 and y == 0:
+		if usingimg and x == 0 and y == 0:
 		    continue
 		if t<int(layer_output.shape[3]):
-			ax[x, y].imshow(img_ascs[x * plot_y + y ])
+			#--gray mode---
+			ax[x, y].imshow(img_ascs[x * plot_y + y ][:,:,0],cmap='gray')
+			#---elastography
+			# ax[x, y].imshow(img_ascs[x * plot_y + y ][:,:,1:4])
+			# ax[x, y].imshow(img_ascs[x * plot_y + y ])
 			ax[x, y].set_title('filter %d' % (x * plot_y + y ))
 		# else :
 		# 	ax[x, y].imshow(img_ascs[x * plot_y + y-1 ])
@@ -147,24 +157,49 @@ def vis_img_in_filter(img_dim,layer_dict,model,
 		t+=1
 	fig.savefig(layer_name+'.png', dpi=100)
 
+def get_layer_output(input_X,input_layer,output_layer):
+		get_output = K.function([input_layer.input],[output_layer.output])
+		layer_output = get_output([input_X])[0]
+		return layer_output
+
+def plotoutput(img,model,num):
+	out_list = get_layer_output(img,model.layers[0],model.layers[11])[0]
+	plot_x = 4
+	plot_y = 4
+	fig, ax = plt.subplots(plot_x, plot_y, figsize = (12, 12))
+
+	fig.tight_layout(pad = 0.3, rect = [0, 0, 0.9, 0.9])
+	t = 0
+	for (x, y) in [(i, j) for i in range(plot_x) for j in range(plot_y)]:
+		#--gray mode---
+		ax[x, y].imshow(out_list[:,:,t],cmap='gray')
+		#---elastography
+		# ax[x, y].imshow(img_ascs[x * plot_y + y ][:,:,1:4])
+		ax[x, y].set_title('filter %d' % (x * plot_y + y ))
+		t+=1
+	fig.savefig('./Meeting12-22/forward_path_output/'+str(num)+'.png', dpi=100)
+
 def main():
-	
+	X = np.load('./Data/dcm_data.npy')
+	img = X[1,:,:,:].reshape(1,300,300,4)
 	K.set_learning_phase(1)
 
 	model_name = "model"
-	model_path = "./model/model_trad_ss_f3.h5"
-	# model_path = "./model/model_sep_ss_f.h5"
-	# model = VGG16(weights='imagenet', include_top=False)
+	model_path = "./model/model_trad_acc_f4.h5"
+
 	model = load_model(model_path,{'ss':ss,'sensitivity':sensitivity,'specificity':specificity})
 	model.summary()
 	layer_dict = dict([(layer.name, layer) for layer in model.layers])
-	# vis_img_in_filter((300,300),layer_dict,model,'block1_conv1',3,img=None)
-	# # img =  scipy.misc.imread('./image_remove_dot/color_4.png', flatten=False,mode='RGB').reshape(1,300,300,3)
-	i = 1
-	for layer in model.layers: 
-		if i != 1:
-			vis_img_in_filter((300,300),layer_dict,model,layer.name,4,img=None)
-		i+=1
+	# ------------ vis filter -------------
+	# i = 1
+	# for layer in model.layers: 
+	# 	if i != 1:
+	# 		vis_img_in_filter((300,300),layer_dict,model,layer.name,4,img=img,usingimg=True)
+	# 	i+=1
+	# ------------ forward path -------------
+	for i in range(len(X)):
+		img = X[i,:,:,:].reshape(1,300,300,4)
+		plotoutput(img,model,i+1)
 
 if __name__ == "__main__":
 	main()
